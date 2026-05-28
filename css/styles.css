@@ -1,0 +1,58 @@
+body {
+    background-color: #f4f4f4; /* Color de fondo de la página*/
+    display: flex;
+    flex-direction: column; /* Pone los elementos en vertical */
+    justify-content: center; /* Centrar horizontal */
+    align-items: center; /* Centrar vertical */
+    min-height: 100vh; /* Altura mínima = toda la pantalla */
+    margin: 0; /* Quitar margen del body */
+    font-family: Arial, Helvetica, sans-serif;
+}
+
+h2 {
+    font-size: 28px; /* Tamaño de fuente del título <h2>*/
+}
+
+label {
+    font-size: 16px; /* Tamaño de fuente de las etiquetas*/
+}
+
+/*
+margin = Espacio FUERA del elemento (entre elementos)
+padding = Espacio DENTRO del elemento (alrededor del contenido)
+*/
+
+/* Estilos generales para todos los form */
+form {
+    margin-top: 20px; /* Espaciado del formulario */
+}
+
+/* Estilos específicos solo para el login */
+.login-form {
+    text-align: center; /* Centrar elementos */
+    /* text-align: center afecta a los elementos HIJOS que son: Elementos inline (como texto, <span>, <a>),
+    Elementos inline-block (como <button>, <input>). Pero NO afecta a elementos: block (como <div>, <form>) 
+    */
+}
+
+/* Espaciado entre campos */
+input {
+    margin-bottom: 15px;
+    padding: 8px;
+}
+
+/* Estilo del botón */
+button {
+    margin-top: 10px;
+    padding: 10px 20px;
+    background-color: #007bff; /* Azul */
+    color: white;  /* Texto blanco */
+    border: none; /* Sin borde */ 
+    border-radius: 5px; /* Esquinas redondeadas */
+    cursor: pointer; /* Cursor de manita al pasar */
+}
+
+/* Efecto al pasar el mouse sobre el botón */
+button:hover {
+    background-color: #0056b3; /* Azul más oscuro */
+}
