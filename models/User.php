@@ -1,5 +1,5 @@
 <?php
-require_once 'model.php'; // Incluir la clase padre que otorga el constructor de la conexión
+require_once 'Model.php'; // Incluir la clase padre que otorga el constructor de la conexión
 
 class User extends Model {
     // Ya no se necesita declarar $connection ni el constructor porque están heredados de Model
@@ -13,7 +13,7 @@ class User extends Model {
     /** @param int[] $rolesArray */
     /* Al poner '@param int[] $rolesArray' se indica que el arreglo contiene únicamente IDs numéricas de 
     los roles */
-    public function signUp(string $userName, string $userPassword, string $confirmPassword, array $rolesArray = [2]): array {
+    public function signUp(string $userName, string $userEmail, string $userPassword, string $confirmPassword, array $rolesArray = [2]): array {
         // 1. Sanitizar $user_name
         $userName = trim($userName);
 
@@ -21,6 +21,13 @@ class User extends Model {
         if($userPassword !== $confirmPassword)
         {
             return ['success' => false, 'errorMessage' => 'Las contraseñas no coinciden.'];
+        }
+
+        // Sanitizar $userEmail y verificar que tenga un formato válido
+        $userEmail = trim($userEmail);
+
+        if (!filter_var($userEmail, FILTER_VALIDATE_EMAIL)) {
+            return ['success' => false, 'errorMessage' => 'El formato de correo electrónico no es válido'];
         }
 
         // 3. Hashear contraseña
@@ -43,10 +50,10 @@ class User extends Model {
 
             // 6. INSERTAR USUARIO 
             $insertUserStmt = $this->connection->prepare(
-                "INSERT INTO users (user_name, user_password) VALUES (?, ?)"
+                "INSERT INTO users (user_name, user_email, user_password) VALUES (?, ?, ?)"
             );
 
-            $insertUserStmt->execute([$userName, $hashedPassword]);
+            $insertUserStmt->execute([$userName, $userEmail, $hashedPassword]);
 
             // 7. Obtener el ID del usuario registrado
             $userId = $this->connection->lastInsertId();
@@ -135,7 +142,7 @@ class User extends Model {
                 'userInfo' => [
                     'userId' => $userInfo['userId'],
                     'userName' => $userInfo['userName'],
-                    'roles' => $rolesArray
+                    'rolesArray' => $rolesArray
                 ]
             ];
         } catch (Exception $e) {
