@@ -1,5 +1,5 @@
 <?php 
-require_once 'model.php'; // Incluir la clase padre que otorga el constructor de la conexión
+require_once 'Model.php'; // Incluir la clase padre que otorga el constructor de la conexión
 
 // Product EXTIENDE Model: hereda $connection y el constructor
 class Product extends Model {
