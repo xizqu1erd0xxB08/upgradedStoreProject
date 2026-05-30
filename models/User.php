@@ -1,148 +1,147 @@
 <?php
-require_once 'Database.php';
-class User {
-    // Crear la propiedad $connection
-    private $connection;
+require_once 'model.php'; // Incluir la clase padre que otorga el constructor de la conexión
 
-    // Crear constructor con $connection
-    public function __construct($connection)
-    {
-        $this->connection = $connection;
-    }
+class User extends Model {
+    // Ya no se necesita declarar $connection ni el constructor porque están heredados de Model
+
+    // Se pueden escribir los métodos directamente
+
+    // Refactorizar todos los métodos con PDO
 
     // Crear el método signUp
-    public function signUp($user_name, $password, $confirm_password, $roles_array)
-    {
+    // Al poner ': array', se le asegura a PHP que el resultado final será estrictamente un arreglo.
+    /** @param int[] $rolesArray */
+    /* Al poner '@param int[] $rolesArray' se indica que el arreglo contiene únicamente IDs numéricas de 
+    los roles */
+    public function signUp(string $userName, string $userPassword, string $confirmPassword, array $rolesArray = [2]): array {
         // 1. Sanitizar $user_name
-        $user_name = trim($user_name);
+        $userName = trim($userName);
 
         // 2. Validar contraseñas
-        if($password !== $confirm_password)
+        if($userPassword !== $confirmPassword)
         {
-            return ['success' => false, 'errorMessage' => 'Passwords do not match'];
+            return ['success' => false, 'errorMessage' => 'Las contraseñas no coinciden.'];
         }
 
         // 3. Hashear contraseña
-        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $hashedPassword = password_hash($userPassword, PASSWORD_DEFAULT);
 
-        // 4. TRANSACCIÓN (nuevo concepto)
-        mysqli_begin_transaction($this->connection);
-
-        // 5. Usar MANEJO DE EXCEPCIONES (bloques try-catch (nuevo concepto))
-        try {
-            // 6. INSERTAR USUARIO (prepared statements)
-            $insert_user_query = "INSERT INTO users (user_name, password) VALUES (?, ?)";
-            $insert_user_stmt = mysqli_prepare($this->connection, $insert_user_query);
-            mysqli_stmt_bind_param($insert_user_stmt, 'ss', $user_name, $hashed_password);
-
-            // Validar inserción del usuario
-            if(!mysqli_stmt_execute($insert_user_stmt) || mysqli_stmt_affected_rows($insert_user_stmt) <= 0){
-                throw new Exception("Error inserting user: " . mysqli_stmt_error($insert_user_stmt));
+        // OBLIGAR a que todos los elementos de $rolesArray sean números enteros
+        foreach ($rolesArray as $roleId) {
+            if (!is_int($roleId)) {
+                // Si algún elemento del array no es un número entero, detiene el programa inmediatamente lanzando un error
+                return ['success' => false, 'errorMessage' => 'El array de roles contiene un valor que no es un número entero'];
             }
+        }
+        
+        try {
+            // 4. TRANSACCIÓN
+            $this->connection->beginTransaction();
+            /* Se empieza una transacción porque al insertar un usuario, también obligatoriamente se le debe insertar un rol, 
+            por lo tanto, hay inserciones en dos tablas distintas, se usa una transacción para garantizar que haya atomicidad 
+            (principio informático de "todo o nada") y evitar que hayan datos huérfanos. Se empieza en un bloque try-catch */ 
 
-            // 7. Obtener el user_id
-            $user_id = mysqli_insert_id($this->connection);
-            mysqli_stmt_close($insert_user_stmt); // Cerrar el Statement de insert_user
+            // 6. INSERTAR USUARIO 
+            $insertUserStmt = $this->connection->prepare(
+                "INSERT INTO users (user_name, user_password) VALUES (?, ?)"
+            );
+
+            $insertUserStmt->execute([$userName, $hashedPassword]);
+
+            // 7. Obtener el ID del usuario registrado
+            $userId = $this->connection->lastInsertId();
 
             // INSERTAR roles (usando un loop)
-            // 8. Insertar rol al usuario con Prepared Statements
-            $insert_user_role_query = "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)";
-            $insert_user_role_stmt = mysqli_prepare($this->connection, $insert_user_role_query);
-            foreach($roles_array as $role_id){
-                mysqli_stmt_bind_param($insert_user_role_stmt, 'ii', $user_id, $role_id);
+            // 8. Insertar rol al usuario recientemente registrado
+            $insertUserRoleStmt = $this->connection->prepare(
+                "INSERT INTO user_roles (user_id, role_id) VALUES (?, ?)"
+            );
 
-                // Validar inserción del rol
-                if(!mysqli_stmt_execute($insert_user_role_stmt) || mysqli_stmt_affected_rows($insert_user_role_stmt) <= 0){
-                    throw new Exception("Error inserting role: " . mysqli_stmt_error($insert_user_role_stmt));
-                }
+            // Bucle foreach para asignarle al usuario recién registrado su rol correspondiente
+            foreach ($rolesArray as $roleId) {
+                $insertUserRoleStmt->execute([$userId, $roleId]);
             }
-            
-            mysqli_stmt_close($insert_user_role_stmt); // Cerrar el Statement de insert_user_role
 
             // 9. Commit para indicar que todo está correcto
-            mysqli_commit($this->connection);
+            $this->connection->commit();
+
             return ['success' => true];
-        } catch (Exception $error){
-            // 10. Rollback para indicar que algo falló
-            mysqli_rollback($this->connection);
-            return ['success' => false, 'errorMessage' => $error->getMessage()];
+
+        } catch (Exception $e){
+            // 10. Rollback para indicar que algo falló (primero verificar que haya una transacción activa)
+            if ($this->connection->inTransaction()) {
+                $this->connection->rollBack();
+            }
+            return ['success' => false, 'errorMessage' => $e->getMessage()];
         }
+
     }
  
     // Crear el método logIn()
-    public function logIn($user_name, $password) // Solo 2 parámetros
-    {
-        // Query con JOIN
-        $login_user_query = "SELECT users.user_id, users.user_name, users.password, user_roles.role_id 
-                            FROM users 
-                            INNER JOIN user_roles ON users.user_id = user_roles.user_id 
-                            WHERE users.user_name = ?";
-        
-        // Preparar Statement
-        $login_user_stmt = mysqli_prepare($this->connection, $login_user_query);
+    public function logIn(string $userIdentifier, string $unhashedPassword): array {
+        try {
+            // Query con JOIN
+            $logInUserStmt = $this->connection->prepare(
+                "SELECT users.user_id, users.user_name, users.user_password, user_roles.role_id 
+                 FROM users 
+                 INNER JOIN user_roles ON users.user_id = user_roles.user_id 
+                 WHERE users.user_name = ? OR users.user_email = ?"
+            );
+            
+            $logInUserStmt->execute([$userIdentifier, $userIdentifier]);
 
-        // Bindear el Statement
-        mysqli_stmt_bind_param($login_user_stmt, 's', $user_name);
+            // Obtener los datos del usuario provenientes de la base de datos
+            $resultsDatabase = $logInUserStmt->fetchAll();
 
-        // Ejecutar el Statement
-        $login_user_stmt_executed = mysqli_stmt_execute($login_user_stmt);
+            // Inicializar como null (que más adelante será un array) la información del usuario que no sean sus roles
+            $userInfo = null; 
+            // Crear un array vacío fuera del loop para guardar la información de roles del usuario, ya que puede tener varios
+            $rolesArray = []; 
 
-        // Validar ejecución
-        if (!$login_user_stmt_executed) {
-            mysqli_stmt_close($login_user_stmt);
-            return ['success' => false, 
-                    'errorMessage' => 'Error al ejecutar la consulta con stmt: ' . mysqli_stmt_error($login_user_stmt)
-            ];
-        }
+            foreach ($resultsDatabase as $row) {
+                /* // Añadir la información (sin incluir los roles aún) del usuario en la primera iteración únicamente, 
+                guardar userName, userEmail y userPassword */
+                if ($userInfo === null) {
+                    $userInfo = [
+                        'userId' => $row['user_id'],
+                        'userName' => $row['user_name'],
+                        'userPassword' => $row['user_password']
+                    ];
+                }
 
-        // Obtener resultado de la query
-        $login_user_stmt_result = mysqli_stmt_get_result($login_user_stmt);
+                // Ahora, en cada iteración: agregar el rol
+                $rolesArray[] = $row['role_id'];
+            }
 
-        $user_info = null; // Inicializar como null (que más adelante será un array) la información del usuario que no sean sus roles
-        $roles_array = []; // Se crea un array vacío fuera del loop para guardar la información de roles del usuario, ya que puede tener varios
-
-        // Crear loop while para guardar la información del usuario 
-        while($row = mysqli_fetch_assoc($login_user_stmt_result)){
-            // Añadir la información (sin incluir los roles aún) del usuario en la primera iteración únicamente, guardar user_id, user_name, password
-            if ($user_info === null) {
-                $user_info = [
-                    'user_id' => $row['user_id'],
-                    'user_name' => $row['user_name'],
-                    'password' => $row['password']
+            // Validar que se encontró el usuario en la database
+            if($userInfo === null){
+                return [
+                    'success' => false,
+                    'errorMessage' => 'Nombre de usuario/email no encontrado en la base de datos'
                 ];
             }
 
-            // Ahora, en cada iteración: agregar el rol
-            $roles_array[] = $row['role_id'];
-        }
+            // Verificar passsword
+            if(!password_verify($unhashedPassword, $userInfo['userPassword'])){
+                return [
+                    'success' => false,
+                    'errorMessage' => 'Contraseña incorrecta.'
+                ];
+            }
 
-        mysqli_stmt_close($login_user_stmt); // Cerrar el Statement
-
-        // Validar que se encontró el usuario en la database
-        if($user_info === null){
+            // Sin errores
             return [
-                'success' => false,
-                'errorMessage' => 'User not found.'
+                'success' => true,
+                'userInfo' => [
+                    'userId' => $userInfo['userId'],
+                    'userName' => $userInfo['userName'],
+                    'roles' => $rolesArray
+                ]
             ];
+        } catch (Exception $e) {
+            return ['success' => false, 'errorMessage' => 'Error en la base de datos: ' . $e->getMessage()];
         }
-
-        // Verificar passsword
-        if(!password_verify($password, $user_info['password'])){
-            return [
-                'success' => false,
-                'errorMessage' => 'Invalid credentials.'
-            ];
-        }
-
-        // Todo correcto, retornar array exitoso
-        return [
-            'success' => true,
-            'user' => [
-                'user_id' => $user_info['user_id'],
-                'user_name' => $user_info['user_name'],
-                'roles' => $roles_array
-            ]
-        ];
+        
     }
 }
 ?>
