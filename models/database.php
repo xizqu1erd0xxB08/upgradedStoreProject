@@ -8,6 +8,8 @@ class Database {
     un valor por defecto al arrancar. Como todavía no se ha ejecutado el constructor, la conexión 
     empieza vacía (null) */
     private ?PDO $connection = null;
+    // Nueva propiedad para guardar el error técnico de error a la base de datos
+    private ?string $connectionError = null; 
 
     /* Constructor que junta los parámetros para realizar la conexión a la base de datos (todos los 
     parámetros de configuración de la base de datos son estrictamente cadenas de texto, es decir, string) */ 
@@ -38,6 +40,7 @@ class Database {
         } catch (PDOException $e) {
             // Si la conexión falla, se guarda null. El controlador verificará si la conexión es válida
             $this->connection = null;
+            $this->connectionError = $e->getMessage(); // Se guarda el mensaje de error
         } 
     }
 
@@ -46,6 +49,11 @@ class Database {
     o devuelve 'null' si hubo error */
     public function getConnection(): ?PDO {
         return $this->connection;
+    }
+
+    // Método para que el controller pueda acceder al mensaje técnico de error a la base de datos
+    public function getConnectionError(): ?string {
+        return $this->connectionError;
     }
 
     /* Método público que cierra la conexión a la base de datos.
