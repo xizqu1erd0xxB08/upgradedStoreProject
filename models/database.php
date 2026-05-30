@@ -15,7 +15,7 @@ class Database {
         // Construir el Data Source Name (DSN)
         $dsn = "mysql:host=$hostName;dbname=$databaseName;charset=utf8mb4";
 
-        /* charset=utfmb4 es importante porque soporta emojis y caracteres especiales, utf8 normal 
+        /* charset=utf8mb4 es importante porque soporta emojis y caracteres especiales, utf8 normal 
         solamente soporta hasta 3 bytes por caracter; utf8mb4 soporta 4 */
 
         // new PDO() puede lanzar una excepción si falla, por eso se envuelve en try-catch
