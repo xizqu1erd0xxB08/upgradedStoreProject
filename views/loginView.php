@@ -9,15 +9,19 @@
 <body>
     <h2>Login</h2>
     <form action="../controllers/loginController.php" method="post" class="login-form">
-        <label for="user_name">Username:</label>
-        <input type="text" id="user_name" name="user_name" required>
+        <label for="userIdentifier">Nombre de usuario o Correo electrónico:</label>
+        <input type="text" id="userIdentifier" name="userIdentifier" required>
         <br><br>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required>
+        <label for="userPassword">Contraseña:</label>
+        <input type="password" id="userPassword" name="userPassword" required>
         <br><br>
 
-        <button type="submit">Login</button>
+        <button type="submit">Iniciar sesión</button>
+        <br><br>
     </form>
+
+        <!-- Mejorar loginView.php para que usuarios que no tengan cuenta accedan al link de registro. -->
+         <p>¿No tienes cuenta?</p> <a href="/publicRegisterView.php">Regístrate</a>
 </body>
 </html>
