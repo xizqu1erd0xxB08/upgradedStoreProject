@@ -144,14 +144,10 @@ class Product extends Model {
 
             $updateProductStmt->execute([$productName, $productPrice, $currentStock, $userId, $productId]); 
 
-            if ($updateProductStmt->rowCount() < 0) {
-                return ['success' => false, 'errorMessage' => 'Error al actualizar producto. Filas afectadas: 0'];
-            }
-
             /* rowCount() = 0 puede significar que el producto no se encontró o que los datos
             eran idénticos. */
             if ($updateProductStmt->rowCount() === 0) {
-                return ['success' => false, 'errorMessage' => 'Producto no encotrado o datos sin cambios'];
+                return ['success' => false, 'errorMessage' => 'Producto no encontrado o datos sin cambios'];
             }
 
             return ['success' => true];
