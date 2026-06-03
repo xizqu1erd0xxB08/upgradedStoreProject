@@ -1,57 +1,65 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/User.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/User.php';
 
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name']) || !in_array(1, $_SESSION['roles'])) {
+// Verificar que solo administradores (role_id = 1) puedan registrar nuevos usuarios
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !in_array(1, $_SESSION['rolesArray'])) {
+    // Implementar 'flash message' para mostrarle al usuario la causa de su prohibición de entrar al formulario
+    /* Un 'flash message' guarda un mensaje en la sesión; la vista destino lee ese mensaje para mostrarlo al 
+    usuario, y luego lo elimina de la sesión para que apareza una sola vez */
+    $_SESSION['flashError'] = 'No tienes permiso para acceder a esta sección';
     header("Location: ../views/loginView.php");
     exit();
 }
-// Validar que el usuario sea admin (paso a implementar después)
 
-// Validar que los datos del formulario hayan llegado correctamente
-if(!isset($_POST['user_name']) || !isset($_POST['password']) || !isset($_POST['confirm_password']) || !isset($_POST['roles'])){
+// Validar que los datos del formulario hayan llegado por POST
+if (!isset($_POST['userName']) || !isset($_POST['userEmail']) || !isset($_POST['userPassword']) || 
+    !isset($_POST['confirmPassword']) || !isset($_POST['rolesArray'])) {
     header("Location: ../views/registerView.php");
     exit();
 }
 
 // Crear las variables necesarias
-$user_name = $_POST['user_name'];
-$password = $_POST['password'];
-$confirm_password = $_POST['confirm_password'];
-$roles_array = array_map('intval', $_POST['roles']);
+$userName = $_POST['userName'];
+$userEmail = $_POST['userEmail'];
+$userPassword = $_POST['userPassword'];
+$confirmPassword = $_POST['confirmPassword'];
+/* 'array_map()' aplica una función a todo un arreglo automáticamente, 'intval' convierte textos 
+numéricos en enteros reales. El objetivo es transformar un array de strings en un array de números
+enteros limpios y seguros, evitando escribir un buble foreach() */
+$rolesArray = array_map('intval', $_POST['rolesArray']);
 
-// Crear objeto $dabatase
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name);
-
-// Obtener la conexión con el método getConnection() del objeto $database
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
 $connection = $database->getConnection();
 
 // Verificar que la conexión haya sido exitosa
-if(!$connection){
-    die("Error de conexión a la base de datos. " . mysqli_connect_error());
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
 }
 
 // Crear objeto $user
 $user = new User($connection);
 
-// Realizar el registro de usuario con el método signUp() del objeto $user
-$signUp = $user->signUp($user_name, $password, $confirm_password, $roles_array);
+// Llamar al método signUp y guardar su resultado
+$signUpResult = $user->signUp($userName, $userEmail, $userPassword, $confirmPassword, $rolesArray);
 
-// Verificar que el registro de usuario haya sido exitoso
-if(!$signUp['success']){
+// Verificar que el registro de usuario haya sido realizado correctamente
+if (!$signUpResult['success']) {
     $database->closeConnection();
-    die("Error: " . $signUp['errorMessage']);
+    die("Error: " . $signUpResult['errorMessage']);
 }
 
-// Éxito, redirigir a registerView.php
+// Éxito, cerrar conexión y redirigir a registerView.php
 $database->closeConnection();
 header("Location: ../views/registerView.php");
 exit();
