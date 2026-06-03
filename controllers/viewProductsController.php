@@ -1,51 +1,49 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Product.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Product.php';
 
-// Validar sesión
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
     header("Location: ../views/loginView.php");
     exit();    
 }
 
 // Obtener la id de sesión del usuario
-$user_id = $_SESSION['user_id'];
+$userId = $_SESSION['userId'];
 
-// Crear el objeto $database
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name);
-
-// Obtener la conexión
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
 $connection = $database->getConnection();
 
-// Validar conexión
-if (!$connection) {
-    die("Conexión fallida a la base de datos: " . mysqli_connect_error());
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
 }
 
 // Crear el objeto $product
-$product_object = new Product($connection);
+$product = new Product($connection);
 
 // Obtener el método getProductsByUser
-$get_products = $product_object->getProductsByUser($user_id);
+$getProducts = $product->getProductsByUser($userId);
 
-// Validar ejecución correcta del método
-if (!$get_products['success']) {
-    // Retornar response array de error:
+// Validar ejecución correcta del método (si falla, cerrar la conexión y retornar response array de error)
+if (!$getProducts['success']) {
     $database->closeConnection();
-    die($get_products['errorMessage']);
+    die($getProducts['errorMessage']);
 }
 
-// Todo correcto, obtener array de productos
+// Si todo salió bien, cerrar conexión y obtener array de productos
 $database->closeConnection();
-$array_products = $get_products['products'];
+$allProducts = $getProducts['allProducts'];
 
 // Incluir la vista
 require_once '../views/viewProductsView.php';
