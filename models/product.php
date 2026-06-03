@@ -77,7 +77,7 @@ class Product extends Model {
             database.php, ATTR_DEFAULT_FETCH_MODE. Ya no se necesita el loop while de mysqli */
             $allProducts = $getProductsByUserStmt->fetchAll();
 
-            return ['success' => true, 'products' => $allProducts];
+            return ['success' => true, 'allProducts' => $allProducts];
 
         } catch (PDOException $e) {
             return ['success' => false, 'errorMessage' => 'Error en la base de datos:' . $e->getMessage()];
