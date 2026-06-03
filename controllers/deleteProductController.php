@@ -1,54 +1,55 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Product.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Product.php';
 
-// Validar sesión del usuario
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
     header("Location: ../views/loginView.php");
-    exit();
+    exit();    
 }
 
-// Crear variable user_id que obtenemos de la sesión
-$user_id = $_SESSION['user_id'];
+// Obtener la id de sesión del usuario
+$userId = $_SESSION['userId'];
 
-// Validar POST del formulario con el product_id que necesitaremos para eliminar la tarea
-if (!isset($_POST['product_id'])) {
+// Validar que la variable productId haya llegado por el método POST 
+if (!isset($_POST['productId'])) {
     die("ID del producto NO encontrada");
 }
 
 // Crear la variable product_id
-$product_id = $_POST['product_id'];
+$productId = $_POST['productId'];
 
-// Crear objeto database para obtener la conexión
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name);
-
-// Obtener conexión
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
 $connection = $database->getConnection();
 
-// Verificar conexión
-if (!$connection) {
-    die("Conexión fallida a la base de datos: " . mysqli_connect_error());
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
 }
 
-$product = new Product($connection); // Crear objeto Product
+// Crear el objeto $product
+$product = new Product($connection);
 
-$delete_product = $product->deleteProduct($product_id, $user_id); // Llamar al método deleteProduct
+// Llamar al método deleteProduct
+$deleteProduct = $product->deleteProduct($productId, $userId); 
 
 // Verificar que se haya ejecutado correctamente
-if (!$delete_product['success']) {
+if (!$deleteProduct['success']) {
     $database->closeConnection();
-    die($delete_product['errorMessage']);
+    die($deleteProduct['errorMessage']);
 }
 
-// Todo OK
+// Si todo salió bien, cerrar la conexión y redirigir al controlador de la vista de productos
 $database->closeConnection();
 header("Location: viewProductsController.php");
 exit();
