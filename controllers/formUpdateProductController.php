@@ -1,50 +1,56 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Product.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Product.php';
 
-// Validar que la sesión del usuario esté activa
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
     header("Location: ../views/loginView.php");
-    exit();
-}
-$user_id = $_SESSION['user_id']; // Variable necesaria para el proceso.
-
-// Validar que el $product_id haya llegado exitosamente por POST
-if (!isset($_POST['product_id'])) {
-    die("Product_id no encontrada");
-}
-$product_id = $_POST['product_id']; // Variable necesaria para el proceso
-
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name); //  Objeto $database
-
-$connection = $database->getConnection(); // Obtener la conexión mediante el método del objeto $database
-
-// Verificar que la conexión haya sido exitosa
-if (!$connection) {
-    die("Conexión fallida a la base de datos: " . mysqli_connect_error());
+    exit();    
 }
 
-$product = new Product($connection); // Objeto $product
+// Obtener la id de sesión del usuario
+$userId = $_SESSION['userId'];
 
-$get_product_by_id = $product->getProductById($product_id, $user_id); // Obtener la ejecución del método necesario
+// Validar que la variable productId haya llegado por el método POST 
+if (!isset($_POST['productId'])) {
+    die("ID del producto NO encontrada");
+}
+
+// Crear la variable productId
+$productId = $_POST['productId'];
+
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
+$connection = $database->getConnection();
+
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
+}
+
+// Crear el objeto $product
+$product = new Product($connection);
+
+$getProductById = $product->getProductById($productId, $userId);
 
 // Validar que el método se haya ejecutado correctamente
-if (!$get_product_by_id['success']) {
+if (!$getProductById['success']) {
     $database->closeConnection();
-    die($get_product_by_id['errorMessage']);
+    die($getProductById['errorMessage']);
 }
 
-// Éxito, obtener array con los datos necesarios
+// Éxito, cerrar la conexión obtener los datos del producto
 $database->closeConnection();
-$product_by_id = $get_product_by_id['product_by_id'];
+$productById = $getProductById['productById'];
 
 // Llamar a la vista
 require_once '../views/formUpdateProductView.php';
