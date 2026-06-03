@@ -2,9 +2,9 @@
 session_start(); // Para poder destruir la sesión, debemos iniciarla primero
 
 // Borrar variables específicas de la sesión
-unset($_SESSION['user_id']);
-unset($_SESSION['user_name']);
-unset($_SESSION['roles']);
+unset($_SESSION['userId']);
+unset($_SESSION['userName']);
+unset($_SESSION['rolesArray']);
 
 // Destruir toda la sesión
 session_destroy();
