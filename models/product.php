@@ -10,7 +10,8 @@ class Product extends Model {
     // Refactorizar todos los métodos con PDO
     // Método createProduct
     /* Al poner ': array', se le asegura a PHP que el resultado final será estrictamente un arreglo. */
-    public function createProduct(string $productName, string|int $productPrice, string|int $currentStock, string|int $userId): array {
+    public function createProduct(string $productName, string|int $productPrice, string|int $currentStock, 
+    string|int $userId): array {
         // Sanitizar $product_name 
         $productName = trim($productName); // Quitar posibles espacios en blanco al inicio y al final
 
@@ -113,7 +114,8 @@ class Product extends Model {
    }
 
     // Método updateProduct()
-    public function updateProduct(string $productName, string|int $productPrice, string|int $currentStock, string|int $userId, string|int $productId): array {
+    public function updateProduct(string $productName, string|int $productPrice, string|int $currentStock, 
+    string|int $userId, string|int $productId): array {
         $productName = trim($productName); // Quitar posibles espacios en blanco al inicio y al final
 
         // Verificar que $productName NO esté vacío 
