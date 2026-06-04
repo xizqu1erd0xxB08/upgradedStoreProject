@@ -1,55 +1,57 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Sale.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Sale.php';
 
-// Validar sesión
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
     header("Location: ../views/loginView.php");
     exit();    
 }
 
 // Obtener la id de sesión del usuario
-$user_id = $_SESSION['user_id'];
+$userId = $_SESSION['userId'];
 
-// Validar que llegó sale_id por POST
-if (!isset($_POST['sale_id'])) {
-    die("ID de la venta no encontrada");
+// Validar que la variable saleId haya llegado por el método POST 
+if (!isset($_POST['saleId'])) {
+    die("ID de la venta NO encontrada");
 }
 
-$sale_id = $_POST['sale_id']; // Crear variable para ejecutar el método
+// Crear la variable saleId
+$saleId = $_POST['saleId'];
 
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name); // Crear el objeto $database
- 
-$connection = $database->getConnection(); // Obtener la conexión
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
+$connection = $database->getConnection();
 
-// Validar conexión
-if (!$connection) {
-    die("Conexión fallida a la base de datos: " . mysqli_connect_error());
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
 }
 
 // Crear el objeto $sale
-$sale_object = new Sale($connection);
+$sale = new Sale($connection);
 
 // Obtener el método getSaleDetails
-$get_sale_details = $sale_object->getSaleDetails($sale_id);
+$getSaleDetails = $sale->getSaleDetails($saleId);
 
-// Validar ejecución correcta del método
-if (!$get_sale_details['success']) {
+// Validar ejecución correcta del método 'getSaleDetails'
+if (!$getSaleDetails['success']) {
     $database->closeConnection(); // El controller obtiene la conexión, el controller la cierra
-    die($get_sale_details['errorMessage']);
+    die($getSaleDetails['errorMessage']);
 }
 
-// Todo correcto, extraer array de detalles
+// Éxito, cerrar conexión y extraer array de detalles de la venta
 $database->closeConnection();
-$array_sale_details = $get_sale_details['sale_details'];
+$arraySaleDetails = $getSaleDetails['saleDetails'];
 
 require_once '../views/viewSaleDetailsView.php'; // Incluir la vista
 ?>
