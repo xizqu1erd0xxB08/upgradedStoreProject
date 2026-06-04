@@ -150,7 +150,7 @@ class Sale extends Model {
             }
 
             // Retornar response array con éxito y array asociativo de ventas
-            return ['success' => true, 'sales' => $salesArray];
+            return ['success' => true, 'salesArray' => $salesArray];
 
         } catch (Exception $e) {
             return ['success'=> false, 'errorMessage' => $e->getMessage()];
