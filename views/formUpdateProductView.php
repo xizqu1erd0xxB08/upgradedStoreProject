@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
 // Evitar caché para el botón de atrás
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -7,38 +9,48 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 // Validar sesión
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName'])) {
     header("Location: loginView.php");
     exit();
 }
+
+// Esta vista normalmente se carga desde formUpdateProductController.php.
+// El controlador crea $productById; este respaldo evita "undefined variable"
+// en VS Code y deja campos vacíos si alguien abre la vista directamente.
+$productById = $productById ?? [
+    'product_id' => '',
+    'product_name' => '',
+    'product_price' => '',
+    'current_stock' => ''
+];
 ?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Product</title>
+    <title>Editar producto</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-    <h3>Edit Product</h3>
+    <h3>Editar producto</h3>
     <form action="../controllers/updateProductController.php" method="post">
-        <label for="product_name">Product Name:</label>
-        <input type="text" name="product_name" value="<?php echo $product_by_id['product_name']; ?>">
+        <label for="productName">Nombre del producto:</label>
+        <input type="text" name="productName" value="<?php echo $productById['product_name']; ?>">
         <br><br>
 
-        <label for="product_price">Product Price:</label>
-        <input type="number" name="product_price" value="<?php echo $product_by_id['product_price']; ?>">
+        <label for="productPrice">Precio del producto:</label>
+        <input type="number" name="productPrice" value="<?php echo $productById['product_price']; ?>">
         <br><br>
 
-        <label for="current_stock">Current Stock:</label>
-        <input type="number" name="current_stock" value="<?php echo $product_by_id['current_stock']; ?>">
+        <label for="currentStock">Stock del producto:</label>
+        <input type="number" name="currentStock" value="<?php echo $productById['current_stock']; ?>">
         <br><br>
-        <input type="hidden" name="product_id" value="<?php echo $product_by_id['product_id']; ?>">
+        <input type="hidden" name="productId" value="<?php echo $productById['product_id']; ?>">
 
-        <button type="submit">Edit Product</button>
+        <button type="submit">Editar</button>
     </form>
 </body>
 </html>

@@ -7,7 +7,8 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 // Validar sesión y rol de administrador (rol id 1)
-if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !in_array(1, $_SESSION['rolesArray'])) {
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray']) 
+    || !in_array(1, $_SESSION['rolesArray'])) {
     header("Location: loginView.php");
     exit();
 }
@@ -48,7 +49,7 @@ if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !in_array(1,
         <label for="roleAdmin">Administrador</label>
         <br>
         <input type="checkbox" id="roleShopOwner" name="rolesArray[]" value="2">
-        <label for="roleShopOwner">Dueño de tienda</label>
+        <label for="roleShopOwner">Dueño de tienda/negocio/local</label>
         <br><br>
 
         <button type="submit">Registrar usuario</button>

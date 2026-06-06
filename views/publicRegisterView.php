@@ -19,7 +19,7 @@ header("Expires: 0");
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-    <h2>Regístrate</h2>
+    <h2>Crear nueva cuenta</h2>
 
     <form action="../controllers/publicRegisterController.php" method="post">
 
@@ -39,7 +39,7 @@ header("Expires: 0");
         <input type="password" id="confirmPassword" name="confirmPassword" required>
         <br><br>
 
-        <button type="submit">Registrar usuario</button>
+        <button type="submit">Enviar</button>
     </form>
 </body>
 </html>

@@ -1,3 +1,15 @@
+<?php
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+// Esta vista normalmente se carga desde reportsController.php.
+// El controlador crea estas variables; estos respaldos evitan "undefined variable"
+// en VS Code y permiten mostrar reportes vacíos si alguien abre la vista directamente.
+$totalRevenue = $totalRevenue ?? null;
+$bestSelling = $bestSelling ?? null;
+$worstSelling = $worstSelling ?? null;
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -12,24 +24,24 @@
     
     <!-- Sección 1: Total Revenue -->
     <h3>💰 Total Vendido</h3>
-    <?php if ($total_revenue !== null): ?>
-        <p>Total: $<?php echo $total_revenue['total_revenue']; ?></p>
+    <?php if ($totalRevenue !== null): ?>
+        <p>Total: $<?php echo $totalRevenue; ?></p>
     <?php else: ?>
-        <p>Error: <?php echo $total_revenue_error; ?></p>
+        <p>Total: $0</p>
     <?php endif; ?>
     
     <hr>
     
-    <!-- Sección 2: Best Selling (tu turno) -->
+    <!-- Sección 2: Best Selling -->
     <h3>🔥 Top 5 Productos Más Vendidos</h3>
-    <?php if ($best_selling !== null): ?>
+    <?php if ($bestSelling !== null): ?>
     <table>
         <tr>
             <th>🔥 Nombre 🔥</th>
             <th>🔥 Cantidad vendida 🔥</th>
         </tr>
     
-    <?php foreach($best_selling as $product): ?>
+    <?php foreach($bestSelling as $product): ?>
         <tr>
             <td><?php echo $product['product_name']; ?></td>
             <td><?php echo $product['total_quantity']; ?></td>
@@ -37,21 +49,21 @@
     <?php endforeach; ?>
         
     </table>
-    <?php else: ?>
-        <p>Error: <?php echo $best_selling_error; ?></p>
+    <?php elseif (empty($bestSelling)): ?>
+        <p>No hay productos más vendidos registrados</p>
     <?php endif; ?>
 
     <hr>
 
-    <!-- Sección 3: Worst Selling (tu turno) -->
+    <!-- Sección 3: Worst Selling -->
     <h3>📉 Top 5 Productos Menos Vendidos</h3>
-    <?php if ($worst_selling !== null): ?>
+    <?php if ($worstSelling !== null): ?>
         <table>
             <tr>
                 <th>📉 Nombre 📉</th>
                 <th>📉 Cantidad vendida 📉</th>
             </tr>
-    <?php foreach($worst_selling as $product): ?>
+    <?php foreach($worstSelling as $product): ?>
         <tr>
             <td><?php echo $product['product_name']; ?></td>
             <td><?php echo $product['total_quantity']; ?></td>
@@ -59,11 +71,11 @@
     <?php endforeach; ?>
 
         </table>
-    <?php else: ?>
-        <p>Error: <?php echo $worst_selling_error; ?></p>
+    <?php elseif (empty($worstSelling)): ?>
+        <p>No hay productos menos vendidos registrados</p>
     <?php endif; ?>
     
     <br>
-    <a href="../views/dashboard.php">Volver al Dashboard</a>
+    <a href="../views/dashboard.php">Volver al inicio</a>
 </body>
 </html>

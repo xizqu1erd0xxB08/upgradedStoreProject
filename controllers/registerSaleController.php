@@ -27,7 +27,7 @@ $productsArray = [];
 
 for ($i=1; $i <= 5 ; $i++) { 
     $productId = $_POST["productId$i"] ?? ''; // Si no existe, string vacía
-    $quantity = (int)$_POST["quantity$i"] ?? 0; // Si no existe, 0
+    $quantity = (int)($_POST["quantity$i"] ?? 0); // Si no existe, 0
 
     // Ignorar si el dropdown está vacío o quantity es 0
     if (empty($productId) || $quantity <= 0) {

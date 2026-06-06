@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
 
 // Evitar caché para el botón de atrás
 header("Cache-Control: no-cache, no-store, must-revalidate");
@@ -7,10 +9,15 @@ header("Pragma: no-cache");
 header("Expires: 0");
 
 // Validar sesión
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName'])) {
     header("Location: loginView.php");
     exit();
 }
+
+// Esta vista normalmente se carga desde viewSalesController.php.
+// El controlador crea $arraySales; este respaldo evita "undefined variable"
+// en VS Code y evita errores si alguien abre la vista directamente.
+$arraySales = $arraySales ?? [];
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -33,7 +40,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
             <th>Acciones</th>
         </tr>
 
-        <?php foreach($array_sales as $sale): ?>
+        <?php foreach($arraySales as $sale): ?>
             <tr>
                 <td><?php echo $sale['sale_id']; ?></td>
                 <td><?php echo $sale['sale_date']; ?></td>
@@ -41,7 +48,7 @@ if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
                 <td><?php echo $sale['products_count']; ?></td>
                 <td>
                     <form action="../controllers/viewSaleDetailsController.php" method="post" style="display: inline;">
-                        <input type="hidden" name="sale_id" value="<?php echo $sale['sale_id']; ?>">
+                        <input type="hidden" name="saleId" value="<?php echo $sale['sale_id']; ?>">
                         <button type="submit">Ver Detalles</button>
                     </form>
                 </td>

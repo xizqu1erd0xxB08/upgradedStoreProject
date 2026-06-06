@@ -7,14 +7,14 @@ header("Pragma: no-cache"); // HTTP 1.0
 header("Expires: 0"); // Proxies
 
 // Validar que el usuario esté logueado
-if(!isset($_SESSION['user_id']) || !isset($_SESSION['user_name']) || !isset($_SESSION['roles'])){
+if(!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])){
     header("Location: loginView.php");  // Si no está logueado, redirigir al login
     exit();
 }
 
 // Guardar datos de sesión en variables para facilitar su uso
-$user_name = $_SESSION['user_name'];
-$roles = $_SESSION['roles']; // Array con los role_id del usuario [1, 2] o [1] o [2]
+$userName = $_SESSION['userName'];
+$rolesArray = $_SESSION['rolesArray']; // Array con los role_id del usuario [1, 2] o [1] o [2]
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -27,17 +27,17 @@ $roles = $_SESSION['roles']; // Array con los role_id del usuario [1, 2] o [1] o
 </head>
 <body>
     <!-- Mostrar nombre del usuario -->
-    <h1>Welcome, <?php echo $user_name; ?>!</h1>
+    <h1>Bienvenido, <?php echo $userName; ?>!</h1>
 
-    <h3>Your Roles:</h3>
+    <h3>Tus roles son:</h3>
     <ul>
         <!-- Forma 2 de foreach (con : endforeach) porque estamos mezclando HTML -->
-        <?php foreach($roles as $role_id): ?>
+        <?php foreach($rolesArray as $roleId): ?>
             <li>
                 <?php 
                     // Convertir role_id numérico a texto legible
-                    if($role_id === 1){echo "Admin";}
-                    if($role_id === 2){echo "Shop Owner";}
+                    if($roleId === 1){echo "Administrador";}
+                    if($roleId === 2){echo "Dueño de tienda/negocio/local";}
                 ?>
             </li>
         <?php endforeach; ?>
@@ -45,19 +45,19 @@ $roles = $_SESSION['roles']; // Array con los role_id del usuario [1, 2] o [1] o
 
     <hr>
 
-    <h3>Actions:</h3>
+    <h3>Acciones que puedes realizar:</h3>
 
     <!-- Mostrar link de "Create User" SOLO si el usuario tiene rol Admin (1) -->
-    <?php if(in_array(1, $roles)): ?>  <!-- in_array busca si 1 existe en $roles -->
-        <a href="registerView.php">Create New User (Admin Only)</a><br>
+    <?php if(in_array(1, $rolesArray)): ?>  <!-- in_array busca si 1 existe en $roles -->
+        <a href="registerView.php">Crear usuario nuevo (Solo administradores)</a><br>
     <?php endif; ?>
 
-    <!-- Links pendientes de implementar (por eso usan #) -->
-    <a href="createProductView.php">Create Product</a><br>
-    <a href="../controllers/viewProductsController.php">Manage Products</a><br>
-    <a href="../controllers/registerSaleFormController.php">Register Sale</a><br>
-    <a href="../controllers/viewSalesController.php">View Sales History</a><br>
-    <a href="../controllers/reportsController.php">Ver Reportes</a><br>
-    <a href="../controllers/logoutController.php">Logout</a>
+    <!-- Links de acciones que el usuario puede realizar -->
+    <a href="createProductView.php">Crear producto</a><br>
+    <a href="../controllers/viewProductsController.php">Ver y administrar productos</a><br>
+    <a href="../controllers/registerSaleFormController.php">Registrar nueva venta</a><br>
+    <a href="../controllers/viewSalesController.php">Ver historial de ventas</a><br>
+    <a href="../controllers/reportsController.php">Ver reportes de ventas</a><br>
+    <a href="../controllers/logoutController.php">Cerrar sesión</a>
 </body>
 </html>

@@ -12,7 +12,8 @@ require_once dirname(__DIR__, 1) . '/models/Database.php';
 require_once dirname(__DIR__, 1) . '/models/User.php';
 
 // Verificar que solo administradores (role_id = 1) puedan registrar nuevos usuarios
-if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !in_array(1, $_SESSION['rolesArray'])) {
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray']) 
+    || !in_array(1, $_SESSION['rolesArray'])) {
     // Implementar 'flash message' para mostrarle al usuario la causa de su prohibición de entrar al formulario
     /* Un 'flash message' guarda un mensaje en la sesión; la vista destino lee ese mensaje para mostrarlo al 
     usuario, y luego lo elimina de la sesión para que apareza una sola vez */
