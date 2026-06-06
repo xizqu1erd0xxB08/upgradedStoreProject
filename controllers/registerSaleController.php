@@ -1,68 +1,74 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Product.php';
-require_once '../models/Sale.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Product.php';
+require_once dirname(__DIR__, 1) . '/models/Sale.php';
 
-// Verificar sesión activa
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
-    header("Location: ../views/loginView.php"); // Redirigir al login si la sesión no está activa
-    exit();
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
+    header("Location: ../views/loginView.php");
+    exit();    
 }
-$user_id = $_SESSION['user_id']; // Variable con la id del usuario
+
+// Obtener la id de sesión del usuario
+$userId = $_SESSION['userId'];
 
 
-// Loop que revise los 5 pares y solo agregue los que tienen product_id NO vacío y tienen quantity > 0
-$products_array = [];
+// Loop que revise los 5 pares y solo agregue los que tienen productId NO vacío y tienen quantity > 0
+$productsArray = [];
 
 for ($i=1; $i <= 5 ; $i++) { 
-    $product_id = $_POST["product_id_$i"]; 
-    $quantity = (int)$_POST["quantity_$i"];
+    $productId = $_POST["productId$i"] ?? ''; // Si no existe, string vacía
+    $quantity = (int)$_POST["quantity$i"] ?? 0; // Si no existe, 0
 
     // Ignorar si el dropdown está vacío o quantity es 0
-    if (empty($product_id) || $quantity <= 0) {
+    if (empty($productId) || $quantity <= 0) {
         continue; // Salta a la siguiente iteración
     }
 
     // Agregar producto válido al array
-    $products_array[] = [
-        'product_id' => (int)$product_id,
-        'quantity' => $quantity
+    $productsArray[] = [
+        'productId' => (int)$productId,
+        'quantity' => (int)$quantity
     ];
 }
 
 // Validar que al menos un producto fue seleccionado
-if (empty($products_array)) {
+if (empty($productsArray)) {
     die("Debe seleccionar al menos un producto con cantidad mayor a 0");
 }
 
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name); // Crear objeto $database
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
+$connection = $database->getConnection();
 
-$connection = $database->getConnection(); // Obtener conexión a la base de datos
-
-// Verificar conexión exitosa a la base de datos
-if (!$connection) {
-    die("Conexión fallida a la base de datos." . mysqli_connect_error());
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
 }
 
-$sale = new Sale($connection); // Crear objeto $sale
+// Crear objeto $sale
+$sale = new Sale($connection);
 
-$products_sale = $sale->registerSale($user_id, $products_array); // LLamar al método que registra la venta
+// LLamar al método que registra la venta
+$productsSale = $sale->registerSale($userId, $productsArray); 
 
 // Validar éxito del método
-if (!$products_sale['success']) {
+if (!$productsSale['success']) {
     $database->closeConnection();
-    die($products_sale['errorMessage']);
+    die($productsSale['errorMessage']);
 }
 
 // éxito
 $database->closeConnection();
-header("Location: ../views/dashboard.php"); // ¿si debería redirigir aquí, o a dónde? creo que aún no tenemos clara la estructura
+header("Location: ../views/dashboard.php");
+exit();
 ?>

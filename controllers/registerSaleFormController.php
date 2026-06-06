@@ -1,43 +1,50 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Product.php';
-require_once '../models/Sale.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Product.php';
 
-// Verificar sesión activa
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
-    header("Location: ../views/loginView.php"); // Redirigir al login si la sesión no está activa
-    exit();
-}
-$user_id = $_SESSION['user_id']; // Variable con la id del usuario
-
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name); // Objeto database que contiene métodos útiles
-
-$connection = $database->getConnection(); // Obtener la conexión a la base de datos
-
-// Verificar conexión exitosa a la base de datos
-if (!$connection) {
-    die("Error de conexión a la base de datos: " . mysqli_connect_error());
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
+    header("Location: ../views/loginView.php");
+    exit();    
 }
 
-$product = new Product($connection); // Objeto product que contiene métodos útiles
+// Obtener la id de sesión del usuario
+$userId = $_SESSION['userId'];
 
-$get_products_by_user = $product->getProductsByUser($user_id); // Obtener todos los productos de un usuario
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
+$connection = $database->getConnection();
+
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    $database->closeConnection();
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
+}
+
+// Crear objeto $product
+$product = new Product($connection);  
+
+// Obtener todos los productos de un usuario
+$getProductsByUser = $product->getProductsByUser($userId); 
 
 // Validar que se hayan obtenido todos los productos del usuario exitosamente
-if (!$get_products_by_user['success']) {
-    die($get_products_by_user['errorMessage']);
+if (!$getProductsByUser['success']) {
+    die($getProductsByUser['errorMessage']);
 }
 
 // Extraer array de productos
-$all_products = $get_products_by_user['products'];
+$allProducts = $getProductsByUser['allProducts'];
+
+$database->closeConnection();
 
 // Incluir la vista 
 require_once '../views/registerSaleFormView.php';

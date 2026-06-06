@@ -1,60 +1,65 @@
 <?php 
+// REFACTORIZAR CONTROLLER A PDO 
 session_start();
 
-// Evitar caché para el botón de atrás
+// Evitar caché del navegador (botón atrás)
 header("Cache-Control: no-cache, no-store, must-revalidate");
 header("Pragma: no-cache");
 header("Expires: 0");
 
-require_once '../config.php';
-require_once '../models/Database.php';
-require_once '../models/Sale.php';
+require_once dirname(__DIR__, 1) . '/config.php';
+require_once dirname(__DIR__, 1) . '/models/Database.php';
+require_once dirname(__DIR__, 1) . '/models/Sale.php';
 
-if (!isset($_SESSION['user_id']) || !isset($_SESSION['user_name'])) {
+// Validar sesión del usuario (si no tiene la sesión activa, redirigir a la vista del log in)
+if (!isset($_SESSION['userId']) || !isset($_SESSION['userName']) || !isset($_SESSION['rolesArray'])) {
     header("Location: ../views/loginView.php");
-    exit();
+    exit();    
 }
 
-$user_id = $_SESSION['user_id'];
+// Obtener la id de sesión del usuario
+$userId = $_SESSION['userId'];
 
-$database = new Database($host_name, $host_admin, $host_admin_password, $database_name);
+// Crear la conexión
+$database = new Database($hostName, $hostAdmin, $hostAdminPassword, $databaseName);
+$connection = $database->getConnection();
 
-$conn = $database->getConnection();
-
-if (!$conn) {
-    die("Conexión fallida a la base de datos: " . mysqli_connect_error());
+// Ahora, con PDO, si la conexión falló el método 'getConnection()' retorna 'null'
+if ($connection === null) {
+    die("No se pudo conectar a la base de datos: " . $database->getConnectionError());
 }
 
-$sale_object = new Sale($conn);
+// Crear el objeto $sale
+$sale = new Sale($connection);
 
 // Ganancias totales
-$total_revenue_result = $sale_object->getTotalRevenue($user_id);
+$totalRevenueResult = $sale->getTotalRevenue($userId);
 
-if (!$total_revenue_result['success']) {
-    $total_revenue = null;
-    $total_revenue_error = $total_revenue_result['errorMessage'];
+if (!$totalRevenueResult['success']) {
+    $totalRevenue = null;
+    $totalRevenueError = $totalRevenueResult['errorMessage'];
 } else {
-    $total_revenue = $total_revenue_result['total_revenue'];
+    $totalRevenue = $totalRevenueResult['totalRevenue'];
 }
 
 // Productos más vendidos
-$best_selling_result = $sale_object->bestSellingProducts($user_id);
+$bestSellingResult = $sale->bestSellingProducts($userId);
 
-if (!$best_selling_result['success']) {
-    $best_selling = null;
-    $best_selling_error = $best_selling_result['errorMessage'];
+if (!$bestSellingResult['success']) {
+    $bestSelling = null;
+    $bestSellingError = $bestSellingResult['errorMessage'];
 } else {
-    $best_selling = $best_selling_result['best_selling_products'];
+    $bestSelling = $bestSellingResult['bestSellingProducts'];
 }
 
 // Productos menos vendidos
-$worst_selling_result = $sale_object->worstSellingProducts($user_id);
+$worstSellingResult = $sale->worstSellingProducts($userId);
 
-if (!$worst_selling_result['success']) {
-    $worst_selling = null;
-    $worst_selling_error = $worst_selling_result['errorMessage'];
+if (!$worstSellingResult['success']) {
+    $worstSelling = null;
+    $worstSellingError = $worstSellingResult['errorMessage'];
 } else {
-    $worst_selling = $worst_selling_result['worst_selling_products'];
+    $worstSelling = $worstSellingResult['worstSellingProducts'];
 }
 
 
