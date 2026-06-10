@@ -86,6 +86,29 @@ class Product extends Model {
     
    }
 
+    // Método getDeletedProductsByUser() 
+    public function getDeletedProductsByUser(string|int $userId): array {
+        try {
+            $getDeletedProductsByUserStmt = $this->connection->prepare(
+                "SELECT product_id, product_name, product_price, current_stock, created_at, updated_at
+                 FROM products
+                 WHERE user_id = ? AND is_active = 0"
+            );
+
+            $getDeletedProductsByUserStmt->execute([$userId]);
+
+            /* fetchAll() retorna un array con todas las filas gracias ala configuración hecha en 
+            database.php, ATTR_DEFAULT_FETCH_MODE. Ya no se necesita el loop while de mysqli */
+            $allProducts = $getDeletedProductsByUserStmt->fetchAll();
+
+            return ['success' => true, 'allProducts' => $allProducts];
+
+        } catch (PDOException $e) {
+            return ['success' => false, 'errorMessage' => 'Error en la base de datos:' . $e->getMessage()];
+        }
+    
+   }
+
     // Método getProductById
     public function getProductById(string|int $productId, string|int $userId): array {
         try {
@@ -172,6 +195,27 @@ class Product extends Model {
 
         if ($deleteProductStmt->rowCount() <= 0) {
             return ['success' => false, 'errorMessage' => 'Error al eliminar producto'];
+        }
+
+        return ['success' => true];
+
+    } catch (PDOException $e) {
+        return ['success' => false, 'errorMessage' => 'Error en la base de datos: ' . $e->getMessage()];
+    }
+   }
+
+    // Método reactivateProduct
+    public function reactivateProduct(string|int $productId, string|int $userId): array {
+    try {
+        $reactivateProductStmt = $this->connection->prepare(
+            "UPDATE products SET is_active = 1 
+             WHERE product_id = ? AND user_id = ?"
+        );
+
+        $reactivateProductStmt->execute([$productId, $userId]);
+
+        if ($reactivateProductStmt->rowCount() <= 0) {
+            return ['success' => false, 'errorMessage' => 'Error al reactivar producto'];
         }
 
         return ['success' => true];

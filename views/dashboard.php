@@ -55,6 +55,7 @@ $rolesArray = $_SESSION['rolesArray']; // Array con los role_id del usuario [1, 
     <!-- Links de acciones que el usuario puede realizar -->
     <a href="createProductView.php">Crear producto</a><br>
     <a href="../controllers/viewProductsController.php">Ver y administrar productos</a><br>
+    <a href="../controllers/viewDeletedProductsController.php">Ver productos eliminados</a><br>
     <a href="../controllers/registerSaleFormController.php">Registrar nueva venta</a><br>
     <a href="../controllers/viewSalesController.php">Ver historial de ventas</a><br>
     <a href="../controllers/reportsController.php">Ver reportes de ventas</a><br>
