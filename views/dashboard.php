@@ -27,7 +27,7 @@ $rolesArray = $_SESSION['rolesArray']; // Array con los role_id del usuario [1, 
 </head>
 <body>
     <!-- Mostrar nombre del usuario -->
-    <h1>Bienvenido, <?php echo $userName; ?>!</h1>
+    <h1 id="bienvenida">Bienvenido, <?php echo $userName; ?>!</h1>
 
     <h3>Tus roles son:</h3>
     <ul>

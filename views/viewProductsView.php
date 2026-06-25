@@ -30,7 +30,7 @@ $allProducts = $allProducts ?? [];
     <link rel="stylesheet" href="../css/styles.css">
 </head>
 <body>
-    <h2>Mis productos</h2>
+    <h2 id="productos">Mis productos</h2>
     <table class="table table-striped table-hover table-bordered">
         <tr>
             <th>Nombre del producto:</th>

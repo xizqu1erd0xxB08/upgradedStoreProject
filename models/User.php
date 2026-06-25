@@ -20,7 +20,7 @@ class User extends Model {
         // 2. Validar contraseñas
         if($userPassword !== $confirmPassword)
         {
-            return ['success' => false, 'errorMessage' => 'Las contraseñas no coinciden.'];
+            return ['success' => false, 'errorMessage' => "<h1 id='error'>Las contraseñas no coinciden.</h1>"];
         }
 
         // Sanitizar $userEmail y verificar que tenga un formato válido
